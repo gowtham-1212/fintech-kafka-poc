@@ -47,24 +47,23 @@ fastify.get('/api/stream', (request, reply) => {
 });
 
 const startKafkaConsumer = async () => {
-  await ensureTopics(['payment.initiated', 'payment.completed', 'payment.failed']);
+  await ensureTopics(['payment.initiated', 'payment.completed', 'payment.failed', 'analytics.metrics']);
   
   const consumer = await getConsumer();
   
-  // Set fromBeginning: true so we don't miss events that happen during service restarts
   await consumer.subscribe({ 
-    topics: ['payment.initiated', 'payment.completed', 'payment.failed'], 
+    topics: ['payment.initiated', 'payment.completed', 'payment.failed', 'analytics.metrics'], 
     fromBeginning: true 
   });
 
   await consumer.run({
-    eachMessage: async ({ topic, partition, message }) => {
+    eachMessage: async ({ topic, message }) => {
       if (!message.value) return;
       
       try {
         const payload = JSON.parse(message.value.toString());
-        console.log(`Received Kafka Event [${topic}]: ${payload.transactionId}`);
         
+        // Broadcast both transaction events and analytics metrics
         eventEmitter.emit('kafka-event', {
           topic,
           ...payload

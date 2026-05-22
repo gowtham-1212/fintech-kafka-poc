@@ -10,7 +10,8 @@
   },
   "dependencies": {
     "fastify": "^4.26.2",
-    "kafkajs": "^2.2.4"
+    "kafkajs": "^2.2.4",
+    "mongoose": "^8.2.1"
   },
   "devDependencies": {
     "@types/node": "^20.11.24",

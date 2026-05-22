@@ -1,4 +1,5 @@
 import { getProducer, getConsumer, disconnectKafka, ensureTopics } from './kafka.js';
+import { connectMongo, Payment } from './db.js';
 
 async function processPayment(event: any) {
   const producer = await getProducer();
@@ -18,6 +19,19 @@ async function processPayment(event: any) {
     failureReason: isSuccess ? null : 'Insufficient funds or simulated error',
   };
 
+  // 1. Persist final transaction state to MongoDB
+  try {
+    await Payment.findOneAndUpdate(
+      { transactionId: resultEvent.transactionId },
+      resultEvent,
+      { upsert: true, new: true }
+    );
+    console.log(`Persisted transaction ${resultEvent.transactionId} to MongoDB`);
+  } catch (err) {
+    console.error(`Error persisting transaction ${resultEvent.transactionId}:`, err);
+  }
+
+  // 2. Produce completion/failure event to Kafka
   await producer.send({
     topic: `payment.${status}`,
     messages: [
@@ -29,6 +43,9 @@ async function processPayment(event: any) {
 }
 
 const start = async () => {
+  // Connect to MongoDB
+  await connectMongo();
+
   // Ensure required topics exist before subscribing
   await ensureTopics(['payment.initiated', 'payment.completed', 'payment.failed']);
   
@@ -42,6 +59,13 @@ const start = async () => {
       
       const payload = JSON.parse(message.value.toString());
       console.log(`Received payment initiation: ${payload.transactionId}`);
+      
+      // Persist initial state to MongoDB
+      try {
+        await Payment.create(payload);
+      } catch (err) {
+        // Might already exist if replaying
+      }
       
       await processPayment(payload);
     },

@@ -1,7 +1,14 @@
 import Fastify from 'fastify';
+import cors from '@fastify/cors';
 import { getProducer, disconnectProducer, ensureTopics } from './kafka.js';
 
 const fastify = Fastify({ logger: true });
+
+// Register CORS
+fastify.register(cors, {
+  origin: '*',
+  methods: ['POST', 'GET', 'OPTIONS'],
+});
 
 interface PaymentRequest {
   userId: string;
@@ -27,8 +34,9 @@ fastify.post('/api/pay', async (request, reply) => {
 
   await producer.send({
     topic: 'payment.initiated',
+    acks: -1,
     messages: [
-      { value: JSON.stringify(event) },
+      { value: JSON.stringify(event) }, // Removed hardcoded partition 1 to allow balanced distribution or random selection
     ],
   });
 
@@ -43,7 +51,6 @@ fastify.post('/api/pay', async (request, reply) => {
 
 const start = async () => {
   try {
-    // Ensure required topics exist before the gateway starts producing
     await ensureTopics(['payment.initiated', 'payment.completed', 'payment.failed']);
     
     const port = parseInt(process.env.PORT || '3001');
