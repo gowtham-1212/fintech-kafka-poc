@@ -10,7 +10,7 @@ services:
       - KAFKA_CFG_NODE_ID=0
       - KAFKA_CFG_PROCESS_ROLES=controller,broker
       - KAFKA_CFG_LISTENERS=PLAINTEXT://:9092,CONTROLLER://:9093,EXTERNAL://:9094
-      - KAFKA_CFG_ADVERTISED_LISTENERS=PLAINTEXT://kafka:9092,EXTERNAL://localhost:9094
+      - KAFKA_CFG_ADVERTISED_LISTENERS=PLAINTEXT://kafka:9092,EXTERNAL://10.55.66.123:9094
       - KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP=CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT,EXTERNAL:PLAINTEXT
       - KAFKA_CFG_CONTROLLER_QUORUM_VOTERS=0@kafka:9093
       - KAFKA_CFG_CONTROLLER_LISTENER_NAMES=CONTROLLER
@@ -25,7 +25,7 @@ services:
       - "8086:8080" # Remapped from 8080
     environment:
       - KAFKA_CLUSTERS_0_NAME=local-kraft
-      - KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS=kafka:9092
+      - KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS=10.55.66.123:9094
       - DYNAMIC_CONFIG_ENABLED=true
     depends_on:
       - kafka
@@ -48,7 +48,7 @@ services:
     image: rediscommander/redis-commander:latest
     container_name: redis-commander
     environment:
-      - REDIS_HOSTS=local:redis:6379
+      - REDIS_HOSTS=local:10.55.66.123:6380
     ports:
       - "8087:8081" # Remapped from 8081
     depends_on:
@@ -72,7 +72,7 @@ services:
       dockerfile: Dockerfile
     environment:
       - KAFKA_BROKERS=kafka:9092
-      - MONGO_URI=mongodb://mongodb:27017/payments
+      - MONGO_URI=mongodb://10.55.66.123:27018/payments
     depends_on:
       - kafka
       - mongodb
@@ -95,7 +95,7 @@ services:
       dockerfile: Dockerfile
     environment:
       - KAFKA_BROKERS=kafka:9092
-      - REDIS_URL=redis://redis:6379
+      - REDIS_URL=redis://10.55.66.123:6380
     depends_on:
       - kafka
       - redis
@@ -107,11 +107,13 @@ services:
     ports:
       - "5183:5173" # Remapped from 5173
     environment:
-      - VITE_NOTIFICATION_SERVICE_URL=http://localhost:3013 # Updated to match remapped port
+      - VITE_NOTIFICATION_SERVICE_URL=http://10.55.66.123:3013 # Updated to match remapped port
     depends_on:
       - notification-worker
 
 volumes:
-  kafka_data:
+  kafka1_data:
+  kafka2_data:
+  kafka3_data:
   mongodb_data:
   redis_data:

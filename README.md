@@ -2,11 +2,13 @@
 
 This project is a Proof of Concept (POC) for a high-scale, event-driven fintech payment system using Kafka (KRaft), Fastify, and React.
 
-## 🆕 New Features: Data Persistence & Caching
-The architecture now includes **MongoDB** for long-term persistence and **Redis** for real-time state caching.
+## 🆕 New Features: Multi-Broker Kafka & Horizontal Scaling
+The system has been upgraded to a **3-broker Kafka cluster** for high availability and **horizontal scaling**. 
+- **Environment Variables**: Kafka credentials and brokers are now managed via `.env` files in each service.
+- **Horizontal Scaling**: Demonstrate parallel processing by scaling the `transaction-engine`.
 
 ## ⚠️ Important: Remapped Ports
-To avoid conflicts with existing services on your machine (like local Kafka, Redis, or Mongo), all external ports have been remapped:
+To avoid conflicts with existing services on your machine, all external ports have been remapped:
 
 | Service | Host Port | Internal Port | URL |
 | :--- | :--- | :--- | :--- |
@@ -15,7 +17,9 @@ To avoid conflicts with existing services on your machine (like local Kafka, Red
 | **Redis Commander** | **8087** | 8081 | `http://localhost:8087` |
 | **Payment Gateway** | **3011** | 3001 | `http://localhost:3011` |
 | **Notification Worker** | **3013** | 3003 | `http://localhost:3013` |
-| **Kafka Broker** | **9096** | 9092 | `localhost:9096` |
+| **Kafka Broker 1** | **9092** | 9092 | `localhost:9092` |
+| **Kafka Broker 2** | **9095** | 9095 | `localhost:9095` |
+| **Kafka Broker 3** | **9096** | 9096 | `localhost:9096` |
 | **MongoDB** | **27018** | 27017 | `localhost:27018` |
 | **Redis** | **6380** | 6379 | `localhost:6380` |
 
@@ -44,15 +48,27 @@ To avoid conflicts with existing services on your machine (like local Kafka, Red
     docker compose up --build
     ```
 
-2.  **Access the Dashboard**:
+2.  **Scale the Transaction Engine** (Optional, for scaling test):
+    ```bash
+    docker compose up -d --scale transaction-engine=3
+    ```
+
+3.  **Run Scaling Test**:
+    ```bash
+    ./scripts/test-scaling.sh
+    ```
+
+4.  **Access the Dashboard**:
     Open `http://localhost:5183` in your browser.
 
-3.  **Monitor Live Data**:
+5.  **Monitor Live Data**:
     - **Kafka UI**: `http://localhost:8086`
     - **Redis Commander**: `http://localhost:8087`
     - **MongoDB**: Connect to `mongodb://localhost:27018`
 
 ## Kafka Use Cases Demonstrated
+- **Horizontal Scaling**: Use Kafka partitions to distribute load across multiple consumer instances. See [USE_CASE_SCALING.md](./USE_CASE_SCALING.md) for details.
+- **Multi-Broker High Availability**: 3-broker cluster setup for resilience.
 - **Persistence (Write-Behind)**: Transaction engine updates DB after processing.
 - **Caching (Read-Aside)**: Analytics service uses Redis to keep aggregate state.
 - **Fan-out**: Notification Worker consuming multiple topics for a single UI stream.

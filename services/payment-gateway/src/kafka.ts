@@ -1,8 +1,11 @@
 import { Kafka, Producer, Admin, logLevel } from "kafkajs";
+import 'dotenv/config'; 
 
 const brokers = process.env.KAFKA_BROKERS
   ? process.env.KAFKA_BROKERS.split(",")
-  : ["localhost:9092"];
+  : ["localhost:9092", "localhost:9095", "localhost:9096"];
+
+console.log(brokers, "brokers======")
 
 export const kafka = new Kafka({
   clientId: "payment-gateway",
@@ -11,8 +14,8 @@ export const kafka = new Kafka({
   ssl: false,
   sasl: {
     mechanism: "plain",
-    username: "luffy",
-    password: "kingofthepirate",
+    username: process.env.KAFKA_USERNAME,
+    password: process.env.KAFKA_PASSWORD,
   },
 });
 
@@ -39,7 +42,7 @@ export async function ensureTopics(topics: string[], numPartitions = 3) {
         topics: topicsToCreate.map((topic) => ({
           topic,
           numPartitions,
-          replicationFactor: 1,
+          replicationFactor: 3,
         })),
       });
     }
